@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+declare -a DISPLAYS=$(swaymsg -t get_workspaces |\
+                                 grep -i output -A 3 |\
+                                 grep -i true -B 3 |\
+                                 grep -i output|\
+                                 awk -F ' ' '{print $2}' |\
+                                 tr -d '", ')
+
+for i in "${DISPLAYS[@]}"
+do
+  grim -o "$i" ~/media/screenshot/$(date +%y%m%d_%H%M%S.png)
+  sleep 1s
+done

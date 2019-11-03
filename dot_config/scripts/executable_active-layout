@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Modify language variable before using the script
+LANG1_CODE="00000000"               # ENGLISH
+LANG2_CODE="00001000"               # FRENCH
+LANG1="English"
+LANG2="French"
+ACTIVE_LAYOUT="$(xset -q | grep -i led | awk -F ' ' '{print $10}')"
+
+if [[ -n "$ACTIVE_LAYOUT" && "$ACTIVE_LAYOUT" == "$LANG1_CODE" ]]; then
+    echo "$LANG1"
+elif [[ -n "$ACTIVE_LAYOUT" && "$ACTIVE_LAYOUT" == "$LANG2_CODE" ]]; then
+    echo "$LANG2"
+else
+    echo "No layout or keyboard layout value not in the script."
+fi

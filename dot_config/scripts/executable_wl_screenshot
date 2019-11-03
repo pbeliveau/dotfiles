@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+LAST_SCREENSHOT=$(ls -1td ~/media/screenshot/* | head -1)
+wl-copy < "$LAST_SCREENSHOT"

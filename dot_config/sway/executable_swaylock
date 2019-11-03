@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+sh ~/.config/sway/shot_active
+img="$HOME/media/screenshot/"
+img+=$(ls -t1 ~/media/screenshot | head -n 1)
+
+convert "${img}" -scale 10% -scale 1000% "${img}"
+convert "${img}" -gravity center -composite -matte "${img}"
+swaylock -i "$img"
+rm "$img"

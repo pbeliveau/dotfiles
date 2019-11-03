@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+ARGUMENT=$1
+
+pm_isrunning() {
+    if [[ $(pgrep -x "Desktop-Bridge") ]]; then
+        ps_running=true
+        pm_status=on
+    else
+        ps_running=false
+        pm_status=off
+    fi
+}
+
+pm_connect() {
+    tmux new-session -d -s mail 'Desktop-Bridge --cli'
+}
+
+pm_disconnect() {
+    while [[ $(pgrep -x "Desktop-Bridge") ]]; do
+        tmux kill-server
+    done
+}
+
+user_input() {
+    if [[ "${BLOCK_BUTTON}" -eq 1 || "$ARGUMENT" == "connect" ]]; then
+        user_request=true
+    elif [[ "${BLOCK_BUTTON}" -eq 3 || "$ARGUMENT" == "disconnect" ]]; then
+        user_request=false
+    fi
+}
+
+pm_echo() {
+   echo "$pm_status"
+   echo "$pm_status"
+}
+
+pm_ssl() {
+
+    declare SSL_CERT
+    declare SSL_STRING
+
+    sleep 5
+    SSL_CERT=$(cat /etc/ssl/certs/ca-certificates.crt | grep -i protonmail)
+    if [ ! "$SSL_CERT" ]; then
+        SSL_STRING="\n # protonmail \n"
+        SSL_STRING+=$(echo -n | \
+                         openssl s_client -starttls imap \
+                                 -connect 127.0.0.1:1143 -showcerts |
+                         sed -n '/BEGIN/,/END/p')
+        sudo bash -c "echo -e '$SSL_STRING' >> /etc/ssl/certs/ca-certificates.crt"
+    fi
+
+    unset SSL_CERT
+    unset SSL_STRING
+
+}
+
+user_input
+pm_isrunning
+if [[ "$ps_running" == "false"  && "$user_request" == "true" ]]; then
+   pm_connect
+   pm_ssl
+   pm_isrunning
+   pm_echo
+elif [[ "$ps_running" == "true"  && "$user_request" == "false" ]]; then
+   pm_disconnect
+   pm_isrunning
+   pm_echo
+else
+   pm_echo
+fi

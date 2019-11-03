@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+profile=$1
+isactive="$(netctl list | grep '*')"
+
+# functions
+function UPDATE() {
+  echo -e "\n--------------"
+  echo -e "UPDATE PROCESS"
+  echo -e "--------------"
+  echo -e "\n------------------------------"
+  echo "Starting pacman update..."
+  sudo pacman -Syu
+  echo -e "\n------------------------------"
+  echo "Starting firmware update..."
+  fwupdmgr refresh
+  fwupdmgr get-updates
+  echo -e "\n------------------------------"
+  echo "System information:"
+  PKG_INS="$(pacman -Qqe | wc -l)"
+  PKG_DEP="$(pacman -Qqd | wc -l)"
+  echo "$PKG_INS packages"
+  echo "$PKG_DEP dependencies"
+  echo "kernel: $(uname -r)"
+}
+
+function VERIFYSWAY() {
+
+    declare LAST_DOWNLOAD
+    declare LAST_COMMIT
+    declare SWAY_URL
+
+    SWAY_URL="https://github.com/swaywm/sway"
+    wget -q "$SWAY_URL" -O ~/tmp/sway
+    LAST_DOWNLOAD=$(ls -1t ~/dotfiles/bin/sway-wm/sway/ | \
+                    grep -i sway-git-r | \
+                    head -1 | \
+                    awk -F 'r' '{print $2}' | \
+                    awk -F '.' '{print $1}')
+    LAST_COMMIT=$(cat ~/tmp/sway | \
+                  grep "class=\"num text-emphasized\"" -A 1 | \
+                  grep '[0-9]' | \
+                  head -1 | tr -d ' |,')
+    rm ~/tmp/sway
+
+    if [ "$LAST_DOWNLOAD" -eq "$LAST_COMMIT" ]; then
+        PULL_GIT=false
+    else
+        PULL_GIT=true
+    fi
+
+    unset LAST_DOWNLOAD
+    unset LAST_COMMIT
+    unset SWAY_URL
+
+}
+
+function UPDATEAUR() {
+  read -p "Do you want to update aur packages (git)? " -n 1 -r REPLYAUR
+  echo
+  if [[ "$REPLYAUR" =~ ^[Yy]$ ]]; then
+    PKG_DIR="/home/pbeliveau/dotfiles/bin/brave/"
+    cd "$PKG_DIR"
+    git pull && makepkg -si --needed
+
+    PKG_DIR="/home/pbeliveau/dotfiles/bin/spotify/"
+    cd "$PKG_DIR"
+    git pull && makepkg -si --needed
+
+    PKG_DIR="/home/pbeliveau/dotfiles/bin/signal/"
+    cd "$PKG_DIR"
+    git pull && makepkg -si --needed
+
+  fi
+}
+
+# core
+if [ -z "${isactive}" ] && [ -n "${profile}" ]; then
+  echo "Starting $profile ..."
+  sudo netctl start $profile
+  sleep 7s
+  ping -c 1 -w 2 archlinux.org > /dev/null
+  if [ $? -eq 0 ]; then
+    UPDATE
+    # VERIFYSWAY
+    # if [ "$PULL_GIT" = true ]; then
+    #     UPDATESWAY
+    # fi
+    UPDATEAUR
+  else
+    echo "could not connect to network."
+  fi
+elif [ -n "${profile}" ]; then
+  active_profile=$(echo "${isactive}" | awk -F ' ' '{print $2}')
+  echo "Already connected to '$active_profile'"
+elif [[ -n "${isactive}" && -z "${profile}" ]]; then
+  ping -c 1 -w 2 archlinux.org > /dev/null
+  if [ $? -eq 0 ]; then
+    UPDATE
+    # VERIFYSWAY
+    # if [ "$PULL_GIT" = true ]; then
+    #     UPDATESWAY
+    # fi
+    UPDATEAUR
+  else
+    echo "could not connect to network."
+  fi
+else
+  echo "Specify the profile to use."
+fi

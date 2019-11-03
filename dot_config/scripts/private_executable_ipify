@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Author .......: Philippe Beliveau/pbeliveau <pbeliveau@pm.me>
+# Description ..: load ipify.sh (from github) to emacs
+# Exit Values ..: {"0": "successful", "1": "arg issues", "2": "connection issues"}
+# Dependencies .: bash>=3.2
+# Linter .......: shellcheck
+# Date .........: December 9, 2018
+
+source ~/documents/software/bash/ipify/ipify.sh
+get_ip -t

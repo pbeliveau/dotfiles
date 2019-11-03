@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+PCI_DOCK=$(lspci -vv | grep -i caldigit)
+SEND_SWAY="swaymsg -q"
+PRIMARY_DISPLAY="HDMI-A-1"
+DEFAULT_DISPLAY="eDP-1"
+WORKSTATION="c00a84d1ac2744b7b698e62cce32db37"
+MACHINE_ID=$(cat /etc/machine-id)
+SWAYLOCK="sh ~/.config/sway/swaylock"
+PID_SWAYIDLE=$(pgrep swayidle)
+
+# export socket to global variable
+if [ -z "$SWAYSOCK" ]; then
+  export SWAYSOCK=$(ls /run/user/*/sway-ipc.*.sock | head -n 1)
+fi
+
+# kill active swayidle command
+if [ -n "$PID_SWAYIDLE" ]; then
+  pkill swayidle
+fi
+
+if [ "$MACHINE_ID" == "$WORKSTATION" ]; then
+  $SEND_SWAY "exec ~/.azotebg"
+elif [ -n "$PCI_DOCK" ]; then
+  brightnessctl s 20%
+  $SEND_SWAY "exec swayidle timeout 3600 '$SWAYLOCK'\
+              before-sleep '$SWAYLOCK'"
+  $SEND_SWAY "output $DEFAULT_DISPLAY dpms off"
+else
+  $SEND_SWAY "exec swayidle\
+              timeout 300 '$SWAYLOCK'\
+              timeout 600 'swaymsg \"output * dpms off\"'\
+              resume 'swaymsg \"output * dpms on\"'\
+              before-sleep '$SWAYLOCK'"
+fi

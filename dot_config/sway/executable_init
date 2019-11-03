@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+MAKO_PID=$(pgrep -f mako)
+REDSHIFT_PID=$(pgrep -f redshift)
+
+if [[ -f ~/.Xresources && -n $(which urxvt) ]]; then
+    xrdb ~/.Xresources
+fi
+
+if [ -n $(which amixer) ]; then
+    amixer -q sset Master 20%
+    amixer -q sset Master mute
+fi
+
+if [[ -z "$MAKO_PID" && -n $(which mako) ]]; then
+    exec mako
+fi
+
+if [[ -z "$REDSHIFT_PID" && -n $(which redshift) ]]; then
+    redshift -m wayland -l 45.4212:-75.7021 &
+fi

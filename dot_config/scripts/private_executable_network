@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+NETWORK=$1
+
+modprobe_wifi() {
+    if [ "$NETWORK" == "ethernet" ]; then
+        sudo bash -c 'modprobe -r iwlmvm'
+    else
+        sudo bash -c 'modprobe iwlmvm'
+    fi
+}
+
+existing_profiles() {
+    PROFILES=$(netctl list)
+    PROFILE_EXIST=$(echo "$PROFILES" | grep -i "$NETWORK")
+    if [ -n "$PROFILE_EXIST" ]; then
+        exist_network=true
+    else
+        exist_network=false
+    fi
+}
+
+read_network() {
+    ACTIVENET=$(netctl list | grep '*' | awk -F ' ' '{print $2}' | tr -d ' ')
+    if [ -n "$ACTIVENET" ]; then
+        active_network=true
+    else
+        active_network=false
+    fi
+}
+
+[[ -z "$NETWORK" ]] && { echo "You have to provide a network." ; exit 1; }
+OFFLINE=$(ip a | grep -F "state DOWN")
+
+modprobe_wifi
+existing_profiles
+read_network
+
+if [[ -n "$OFFLINE" && "$exist_network"="true" ]]; then
+  echo "Connecting to $NETWORK ..."
+  sudo netctl start "$NETWORK"
+  sleep 2s
+  FAILURE=$(sudo netctl status "$NETWORK" | grep -i active)
+  [[ -z "$FAILURE" ]] && { echo "Status: failed." ; exit 0; }
+  echo "Status: online."
+  exit 1
+elif [[ "$active_network"="true" && "$exist_network"="true" ]]; then
+  read -p "Do you want to change from $ACTIVENET to $NETWORK? " -n 1 -r REPLYNETWORK
+  if [[ "$REPLYNETWORK" =~ ^[Yy]$ ]]; then
+      sudo netctl stop-all
+      sudo netctl start "$NETWORK"
+      FAILURE=$(sudo netctl status "$NETWORK" | grep -i active)
+      [[ -z "$FAILURE" ]] && { echo "Status: failed." ; exit 0; }
+      echo "Status: online."
+      exit 1
+  fi
+fi

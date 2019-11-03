@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+pkill swaybg
+swaybg -o HDMI-A-1 -i '/home/pbeliveau/media/wallpapers/hakon-sataoen-23713-unsplash.jpg' -m stretch &

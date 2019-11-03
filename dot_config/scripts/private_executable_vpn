@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Author .......: Philippe Beliveau/pbeliveau <pbeliveau@pm.me>
+# Description ..: Integrate ProtonVPN with i3blocks
+# Exit Values ..: {"0": "successful", "1": "arg issues", "2": "connection issues"}
+# Dependencies .: protonvpn-cli, bash>=3.2
+# Linter .......: shellcheck
+# Date .........: December 9, 2018
+
+is_online() {
+
+    declare -g NET_STATUS
+
+    NET_STATUS=$(ip a | awk '/wlp*/{print $9}' | head -1)
+    if [ ! "$NET_STATUS" ]; then
+        echo "No interface starting with wlp*."
+        return 2
+    fi
+
+}
+
+is_vpn() {
+
+    declare VPN_INTERFACE
+
+    VPN_INTERFACE=$(ip a | awk -F: '/tun/{print $2}' | head -1)
+    if [ ! "$VPN_INTERFACE" ]; then
+        echo "off"
+        echo "off"
+    else
+        echo "on"
+        echo "on"
+    fi
+
+    unset VPN_INTERFACE
+
+}
+
+get_vpn() {
+
+    declare VPN
+
+    VPN=$(which protonvpn-cli)
+    if [[ "${BLOCK_BUTTON}" -eq 1 || "$ARGUMENT" == "connect" ]]; then
+        VPN+=" -sc"
+        sudo bash -c "$VPN"
+    elif [[ "${BLOCK_BUTTON}" -eq 3 || "$ARGUMENT" == "disconnect" ]]; then
+        VPN+=" -d"
+        sudo bash -c "$VPN"
+    fi
+
+    unset VPN
+
+}
+
+ARGUMENT="${1}"
+is_online
+if [ "$NET_STATUS" == "UP" ]; then
+    get_vpn
+fi
+is_vpn
+
+unset NET_STATUS

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+PCI_DOCK=$(lspci -vv | grep -i caldigit)
+WORKSTATION="755144ff55584967b81f837487895de4"
+MACHINE_ID=$(cat /etc/machine-id)
+GRAPH_ENV=$(echo $XDG_SESSION_TYPE)
+ISRYZEN=$(cat /proc/cpuinfo | grep -i ryzen)
+
+# Graphical environnement settings
+if [ "$GRAPH_ENV" == "x11" ]; then
+    setxkbmap -layout us,ca -option grp:shifts_toggle
+    if [ "$MACHINE_ID" == "$WORKSTATION" ]; then
+        xrandr --output DisplayPort-0 --off \
+               --output DVI-D-0 --off \
+               --output DVI-D-1 --off \
+               --output DVI-I-1-1 --mode 1920x1080 --pos 1904x0 --rotate left \
+               --output HDMI-A-0 --primary --mode 1920x1080 --pos 0x0 --rotate normal
+        exit 1
+    elif [ -n "$PCI_DOCK" ]; then
+        xrandr --output eDP1 --off \
+               --output DVI-D-0 --off \
+               --output DVI-D-1 --off \
+               --output DisplayPort-0 --off \
+               --output DVI-I-1-1 --mode 1920x1080 --pos 1904x0 --rotate left \
+               --output HDMI-A-0 --primary --mode 1920x1080 --pos 0x0 --rotate normal
+    fi
+fi
+
+# Non-graph settings
+## Common
+pamixer --sink 0 -m
+
+## Computer specific
+if [[ -n "$PCI_DOCK" || "$MACHINE_ID" == "$WORKSTATION" ]]; then
+    sudo modprobe xhci_pci
+    sudo modprobe igb
+    sudo modprobe udl
+    sudo modprobe -r iwlmvm
+else
+    sudo modprobe -r xhci_pci
+    sudo modprobe -r igb
+    sudo modprobe iwlmvm
+fi
+
+# stop-ish soft locks
+if [ -n "$ISRYZEN" ]; then
+    # sudo modprobe msr
+    # sudo ryzen-stabilizator -disable-c6
+    # sudo ryzen-stabilizator -disable-boosting
+fi

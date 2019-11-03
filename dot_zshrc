@@ -1,0 +1,97 @@
+# tabbing with insensitive case
+autoload -Uz compinit
+compinit
+zstyle ':completion:*' matcher-list '' 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' \
+  '+l:|?=** r:|?=**'
+
+# gpg
+unset SSH_AGENT_PID
+if [ "${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]; then
+  export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+fi
+export GPG_TTY=$(tty)
+gpg-connect-agent updatestartuptty /bye >/dev/null
+
+# tar options
+export TAR_OPTIONS=--format=gnu
+
+# load sway and variables export
+export XKB_DEFAULT_LAYOUT=us,ca
+export XKB_DEFAULT_OPTIONS=grp:shifts_toggle
+export SWAYSOCK=/run/user/$(id -u)/sway-ipc.$(id -u).$(pgrep -x sway).sock
+
+# libreoffice theme
+export SAL_USE_VCLPLUGIN=gtk
+
+# npm/node
+PATH="$HOME/.node_modules/bin:$PATH"
+export npm_config_prefix=~/.node_modules
+
+# If you come from bash you might have to change your $PATH.
+export PATH=$HOME/bin:/usr/local/bin:$PATH
+
+#export browser and apps
+export BROWSER='brave'
+
+#export the best editor man-made
+export EDITOR="/usr/bin/emacsclient"
+
+# Ruby
+export GEM_HOME=$HOME/.gem
+PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
+
+# perl
+LANGUAGE=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+LANG=en_US.UTF-8
+LC_TYPE=en_US.UTF-8
+
+# Uncomment the following line to use case-sensitive completion.
+CASE_SENSITIVE="false"
+
+# Uncomment the following line to disable colors in ls.
+DISABLE_LS_COLORS="false"
+
+# Uncomment the following line to enable command auto-correction.
+ENABLE_CORRECTION="true"
+
+# Uncomment the following line to display red dots whilst waiting for completion.
+COMPLETION_WAITING_DOTS="true"
+
+# User configuration
+export MANPATH="/usr/local/man:$MANPATH"
+
+# Compilation flags
+export ARCHFLAGS="-arch x86_64"
+
+# ssh
+export SSH_KEY_PATH="~/.ssh/rsa_id"
+
+extract() {
+   if [ -f $1 ] ; then
+       case $1 in
+           *.tar.bz2)	tar xvjf $1    ;;
+           *.tar.gz)	tar xvzf $1    ;;
+	   *.tar.xz)	tar xJf $1     ;;
+           *.bz2)	bunzip2 $1     ;;
+           *.rar)	unrar x $1     ;;
+           *.gz)	gunzip $1      ;;
+           *.tar)	tar xvf $1     ;;
+           *.tbz2)	tar xvjf $1    ;;
+           *.tgz)	tar xvzf $1    ;;
+           *.zip)	unzip $1       ;;
+           *.Z)		uncompress $1  ;;
+           *.7z)	7z x $1        ;;
+           *)		echo "Unable to extract '$1'" ;;
+       esac
+   else
+       echo "'$1' is not a valid file"
+   fi
+}
+
+HISTFILE=$HOME/documents/docs/.histfile
+HISTSIZE=500
+SAVEHIST=500
+
+[[ -n "${key[Up]}"   ]] && bindkey "${key[Up]}"   up-line-or-beginning-search
+[[ -n "${key[Down]}" ]] && bindkey "${key[Down]}" down-line-or-beginning-search

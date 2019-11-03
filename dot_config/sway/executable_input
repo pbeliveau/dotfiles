@@ -1,0 +1,29 @@
+input "1739:0:Synaptics_TM3289-002" {
+      events disabled
+}
+
+input "1:1:AT_Translated_Set_2_keyboard" {
+      xkb_options "ctrl:nocaps,grp:shifts_toggle"
+      xkb_layout us,ca
+}
+
+input "TPPS/2 Elan TrackPoint" {
+      drag disabled
+}
+
+input "2131:256:Topre_Corporation_HHKB_Professional" {
+      xkb_layout us,ca
+      xkb_options grp:shifts_toggle
+}
+
+input "USB Keyboard" {
+      xkb_layout us,ca
+      xkb_options grp:shifts_toggle
+}
+
+input "Clearly Superior Technologies. CST Laser Trackball" {
+      drag enabled
+      dwt enabled
+      accel_profile adaptive
+      pointer_accel 0
+}

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+SCREENSHOT=$(date +%Y%m%d_%H%M%S.png)
+SHOT_PATH="$HOME/media/screenshot/$SCREENSHOT"
+REGION=$(slurp)
+
+# take the sreenshot and print to clipboard
+grim -g "$REGION" "$SHOT_PATH"
+grim -g "$REGION" - | wl-copy
+
+# send notification
+if [ -f ~/media/screenshot/"$SCREENSHOT" ]; then
+   notify-send ~/media/screenshot/"$SCREENSHOT"
+else
+   notify-send "No screenshot taken."
+fi

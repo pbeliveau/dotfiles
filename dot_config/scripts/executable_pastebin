@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+# Static variables
+WEBSITE="https://ptpb.pw/"
+
+# usage
+USAGE=$(cat <<EOF
+Small script to upload the output of a file to ptpw.pw.
+
+=== OPTIONS ===
+x) Enter a password to encrypt the ouput in AES-256. Leave empty if you want to
+   upload unencrypted output. (Need ccrypt to work)
+f) Specify the filename to output. The script will fail without this option.
+s) Make full use of the 'sunset' capacity of $WEBSITE. Leave empty if you want
+   your script to stay online for an unspecified period of time.
+r) Reverse the use. -x decrypts, -f is now optional to save the output locally,
+   and -s is null. You have to specify the code following the $WEBSITE. See exemple.
+h) Show this message output.
+
+=== EXEMPLES ==
+Encrypt output of specified file:
+        pastebin -f test.txt -x "verysecurepassword"
+
+Encrypt, and set an autodelete in seconds (60 in this case):
+        pastebin -f test.txt -x "verysecurepassword" -s 60
+
+Reverse use:
+        pastebin -r "xY34" -x "passwordtodecrypt" -f "filetosave.txt"
+EOF
+)
+
+# verify dependencies
+declare -a arr=("bash" "curl" "ccrypt")
+for i in "${arr[@]}"; do
+  if [ -z "$(which $i)" ]; then
+    echo "$i not found. You need it for this script to work."
+    exit 1
+  fi
+done
+
+# 3 options, encrypt, file location, and if sunset
+while getopts "x:f:s:hr:" OPTION; do
+  case ${OPTION} in
+    x) 
+      ENCRYPT=${OPTARG}
+      ;;
+    f)
+      FILENAME=${OPTARG}
+      ;;
+    s)
+      SUNSET=${OPTARG}
+      ;;
+    h)
+      echo "$USAGE"
+      exit 1
+      ;;
+    r)
+      REVERSE=${OPTARG}
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+# check and run the upload
+if [ -z "$REVERSE" ]; then
+  if [ -z "$FILENAME" ]; then
+    echo "You have to specify a file to upload with -f."
+    exit 1
+  elif [[ -n "$FILENAME" && -n "$SUNSET" && -n "$ENCRYPT" ]]; then
+    cat "$FILENAME" | ccrypt -f -K "$ENCRYPT" | curl -F c=@- -F sunset="$SUNSET" "$WEBSITE"
+  elif [[ -n "$FILENAME" && -z "$SUNSET" && -n "$ENCRYPT" ]]; then
+    cat "$FILENAME" | ccrypt -f -K "$ENCRYPT" | curl -F c=@- "$WEBSITE"
+  elif [[ -n "$FILENAME" && -n "$SUNSET" && -z "$ENCRYPT" ]]; then
+    cat "$FILENAME" | curl -F c=@- -F sunset="$SUNSET" "$WEBSITE"
+  elif [[ -n "$FILENAME" && -z "$SUNSET" && -z "$ENCRYPT" ]]; then
+    cat "$FILENAME" | curl -F c=@- "$WEBSITE"
+  else
+    echo "$USAGE"
+  fi
+else
+  if [[ -z "$FILENAME" && -z "$ENCRYPT" ]]; then
+    curl "$WEBSITE$REVERSE"
+  elif [[ -z "$FILENAME" && -n "$ENCRYPT" ]]; then
+    curl "$WEBSITE$REVERSE" | ccrypt -fd -K "$ENCRYPT"
+  elif [[ -n "$FILENAME" &&  -n "$ENCRYPT" ]]; then
+    curl "$WEBSITE$REVERSE" | ccrypt -fd -K "$ENCRYPT" > $FILENAME
+  elif [[ -n "$FILENAME" &&  -z "$ENCRYPT" ]]; then
+    curl "$WEBSITE$REVERSE" > $FILENAME
+  else
+    echo "$USAGE"
+  fi
+fi
